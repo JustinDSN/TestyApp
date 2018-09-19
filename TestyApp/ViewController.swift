@@ -8,28 +8,38 @@ protocol ViewControllerDelegate: AnyObject {
   func viewControllerViewDidDisappear(viewController: ViewController, animated: Bool)
 }
 
-class BaseViewControllerState {
+class BaseViewControllerState: NSObject {
   var name: String {
     fatalError("Subclass must implement")
   }
 
-  init() {
+  var pendingWorkItem: DispatchWorkItem?
+
+  override init() {
+    super.init()
+    print("DEBUG: \(#function) \(self.asPointer) \(self.asPointer.asEmoji)")
     print("Init of \(name)")
   }
 
   deinit {
     print("Deinit of \(name)")
+    pendingWorkItem?.cancel()
   }
 
   func activate(sayHelloAfter: DispatchTimeInterval) {
     print("Activating \(name)...")
+    pendingWorkItem?.cancel()
 
-    DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + sayHelloAfter) { [unowned self] in
-        self.sayHello()
+    let workItem = DispatchWorkItem { [unowned self] in
+      self.sayHello()
     }
+
+    pendingWorkItem = workItem
+    DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + sayHelloAfter, execute: workItem)
   }
 
   func sayHello() {
+    print("DEBUG: \(#function) \(self.asPointer) \(self.asPointer.asEmoji)")
     print("Hello from \(name)")
   }
 }
@@ -89,3 +99,23 @@ class ViewController: UIViewController {
 
 }
 
+extension NSObject {
+  public var asPointer: UnsafeMutableRawPointer {
+    return Unmanaged.passUnretained(self).toOpaque()
+  }
+}
+
+extension UnsafeMutableRawPointer {
+  public var asEmoji: String {
+    // Adapted from https://gist.github.com/iandundas/59303ab6fd443b5eec39
+    // Tweak the range to your liking.
+    //let range = 0x1F600...0x1F64F
+    let range = 0x1F300...0x1F3F0
+    let index = (self.hashValue % range.count)
+    let ord = range.lowerBound + index
+    guard let scalar = UnicodeScalar(ord) else {
+      return "❓"
+    }
+    return String(scalar)
+  }
+}
