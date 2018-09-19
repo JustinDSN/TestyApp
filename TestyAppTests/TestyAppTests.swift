@@ -65,7 +65,7 @@ class TestyAppTests: XCTestCase, ViewControllerDelegate {
 
     createSystemUnderTest(makeWindowKeyAndVisible: true)
 
-    wait(for: expectations, timeout: 1, enforceOrder: true)
+    wait(for: expectations, timeout: 5, enforceOrder: true)
   }
 
   func viewControllerViewDidLoad(viewController: ViewController) {
@@ -84,7 +84,9 @@ class TestyAppTests: XCTestCase, ViewControllerDelegate {
 
     //Present a different view controller to trigger the viewWillDisappear and
     //viewDidDisappear lifecylce methods
-    rootViewController.present(UIViewController(), animated: true, completion: nil)
+//    rootViewController.present(UIViewController(), animated: true, completion: nil)
+
+    rootViewController.currentState = ViewControllerStateB()
   }
 
   func viewControllerViewWillDisappear(viewController: ViewController, animated: Bool) {
